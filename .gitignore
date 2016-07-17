@@ -1,3 +1,7 @@
+# Why did I add a python gitignore? Must be habit. 
+# Anyway, ignore these files:
+output
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
