@@ -33,6 +33,15 @@ what..."
 ```
 
 ### Example Output:
+Key: Solid lines is code execution, dotted lines are jumps
+Code execution:
+```*
+|
+*```
+Code jump:
+```.v
+ |
+ >.```
 
 
 ![alt text][outputimage]

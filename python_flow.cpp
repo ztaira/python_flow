@@ -80,10 +80,6 @@ int main(int argc, char *argv[])
     cout << "Scan start: " << start+1 << endl << "Scan end: " << end << endl;
 
     // scan from start to end for a function call
-    // types to account for:
-    // system call, e.g. len(string)
-    // object declaration, e.g. x = object()
-    // object method, e.g. x = object.obj_func()
     // if one is found, go scan that one too
     last_position = start;
     cout << "Starting scan:" << endl << endl;
