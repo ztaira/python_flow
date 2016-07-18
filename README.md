@@ -19,7 +19,7 @@ what..."
 - Allows you to optimize your code for maximum visual/navigation efficiency
 
 ## What it doesn't do:
-- Account for calls nested inside classes or other libraries
+- Account for calls nested inside classes or imported libraries
 - Visually color the output for easier usability
 
 ## Reasons for not doing things:
