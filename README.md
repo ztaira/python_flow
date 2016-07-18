@@ -56,5 +56,5 @@ Code jump:
 
 ### Inefficient File Example - choppy, erratic code flow:
 ![alt text][outputimage2]
-[outputimage2]: https://github.com/ztaira14/python_flow/blob/master/example.png "Python Flow output on helloworld_ugly.py"
+[outputimage2]: https://github.com/ztaira14/python_flow/blob/master/example_ugly.png "Python Flow output on helloworld_ugly.py"
 
