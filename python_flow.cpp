@@ -19,9 +19,17 @@ using namespace std;
 vector<string> line_array;
 stack<int> jump_back;
 
+void read_in_workfile(string file_name);
+void equalize_line_lengths(int length);
+int get_start_line();
 int scan_function(string func_name, int level, int lastpos);
-int follow_code(int start, int end);
-int jump_code(int start, int end);
+int get_def_line(string func_name, int lastpos);
+int get_def_end(int start);
+int draw_execution(int start, int end);
+int draw_jump(int start, int end);
+void draw_jump_endpoints(int start, int end, char direction);
+void draw_jump_trace(int start, int end);
+void print_flow();
 
 int main(int argc, char *argv[])
 {
@@ -30,45 +38,47 @@ int main(int argc, char *argv[])
     int end;
     int level=0;
     int last_position;
-
     // read in file to vector of strings
-    ifstream workfile (argv[1]);
-    string line;
-    while ( getline (workfile,line) )
-    {   
-        line_array.push_back(line);
-    }
-    workfile.close();
-
-    // equalize lengths of vector strings
-    // if string is less than 80, add spaces
-    // if string is greater than 80, cut to 77 and add '...' to the end
-    for (vector<string>::iterator itr = line_array.begin();
-         itr != line_array.end(); ++itr)
-    {
-        while (itr->length() < 40)
-        {
-            itr->push_back(' ');
-        }
-        if (itr->length() > 80)
-        {
-            while (itr->length() > 77)
-            {
-                itr->pop_back();
-            }
-            itr->push_back('.');
-            itr->push_back('.');
-            itr->push_back('.');
-        }
-    }
-    
+    read_in_workfile(argv[1]);
+    //equalize line lengths
+    equalize_line_lengths(40);
     // search through vector for 'if __name__ == '__main__':
     // set the start to that line
     // set the end to the bottom of the file
     cout << "Main func string found on line(s):" << endl;
+    end = line_array.size();
+    start = get_start_line();
+    cout << "Scan start: " << start+1 << endl << "Scan end: " << end << endl;
+    // scan from start to end for a function call
+    // if one is found, recursively scan that one too
+    last_position = start;
+    cout << "Starting scan:" << endl << endl;
+    regex func ("(\\S+)\\(.*\\)");
+    smatch match_results;
+    for (int i=start; i<end; ++i)
+    {
+        if (regex_search(line_array[i], match_results, func))
+        {
+            draw_execution(last_position, i);
+            last_position=i;
+            // cout << level+1 << match_results[1] << endl;
+            jump_back.push(i);
+            scan_function(match_results[1], level+1, i);
+        }
+    }
+    // trace to end of file
+    draw_execution(last_position, end-1);
+    // print out the line_array
+    print_flow();
+    return 1;
+}
+
+// returns the line where the "if __name__ == __main__:" function is at
+int get_start_line()
+{
+    int start = 0;
     regex main_func ("if __name__ == .__main__.:");
     smatch match_results;
-    end = line_array.size();
     for (int i=0; i<line_array.size(); ++i)
     {
         if (regex_search(line_array[i], match_results, main_func))
@@ -77,33 +87,45 @@ int main(int argc, char *argv[])
             cout << i+1 << endl;
         }
     }
-    cout << "Scan start: " << start+1 << endl << "Scan end: " << end << endl;
+    return start;
+}
 
-    // scan from start to end for a function call
-    // if one is found, go scan that one too
-    last_position = start;
-    cout << "Starting scan:" << endl << endl;
-    // cout << level << "if __name__ == .__main__.:" << endl;
-    regex func ("(\\S+)\\(.*\\)");
-    for (int i=start; i<end; ++i)
+// reads in a file and puts it in the global line_array
+void read_in_workfile(string file_name)
+{
+    ifstream workfile (file_name);
+    string line;
+    while ( getline (workfile,line) )
+    {   
+        line_array.push_back(line);
+    }
+    workfile.close();
+}
+
+//makes all lengths in line_array equal
+void equalize_line_lengths(int length)
+{
+    // equalize lengths of vector strings
+    // if string is less than 80, add spaces
+    // if string is greater than 80, cut to 77 and add '...' to the end
+    for (vector<string>::iterator itr = line_array.begin();
+         itr != line_array.end(); ++itr)
     {
-        if (regex_search(line_array[i], match_results, func))
+        while (itr->length() < length)
         {
-            follow_code(last_position, i);
-            last_position=i;
-            // cout << level+1 << match_results[1] << endl;
-            jump_back.push(i);
-            scan_function(match_results[1], level+1, i);
+            itr->push_back(' ');
+        }
+        if (itr->length() > length)
+        {
+            while (itr->length() > length-3)
+            {
+                itr->pop_back();
+            }
+            itr->push_back('.');
+            itr->push_back('.');
+            itr->push_back('.');
         }
     }
-
-    follow_code(last_position, end-1);
-
-    for (int i=0; i<line_array.size(); ++i)
-    {
-        cout << left << setw(4) << i+1 << line_array[i] << endl;
-    }
-    return 1;
 }
 
 int scan_function(string func_name, int level, int lastpos)
@@ -111,29 +133,65 @@ int scan_function(string func_name, int level, int lastpos)
     // set variables to hold start, end
     int start = -1;
     int end = -1;
-    // regex to match function declaration
-    regex declaration ("def "+func_name+"\\(");
     // regex to match function call
     regex func ("(\\S+)\\(.*\\)");
     smatch match_results;
 
-    // set the start variable to function declaration
-    for (int i=0; i<line_array.size(); ++i)
-    {
-        if (regex_search(line_array[i], match_results, declaration))
-        {
-            jump_code(lastpos, i);
-            lastpos = i;
-            start = i;
-        }
-    }
+    // set the start to equal the line where func_name is defined
+    start = get_def_line(func_name, lastpos);
+    lastpos = start;
     if (start == -1)
     {
         return 0;
     }
     
+    // set the end to the line  when the indent is less
+    end = get_def_end(start);
+
+    // scan inside func_name for any functions
+    for (int i=start+1; i<end; ++i)
+    {
+        if (regex_search(line_array[i], match_results, func))
+        {
+            draw_execution(lastpos, i);
+            lastpos = i;
+            // cout << level+1 << match_results[1] << endl;
+            jump_back.push(i);
+            scan_function(match_results[1], level+1, i);
+        }
+    }
+
+    draw_execution(lastpos, end-1);
+    draw_jump(end-1, jump_back.top());
+    jump_back.pop();
     
+    return end;
+}
+
+int get_def_line(string func_name, int lastpos)
+{
+    int start = -1;
+    // regex to match function declaration
+    regex declaration ("def "+func_name+"\\(");
+    smatch match_results;
+    // set the start variable to function declaration
+    for (int i=0; i<line_array.size(); ++i)
+    {
+        if (regex_search(line_array[i], match_results, declaration))
+        {
+            draw_jump(lastpos, i);
+            lastpos = i;
+            start = i;
+        }
+    }
+    return start;
+}
+
+int get_def_end(int start)
+{
+    int end;
     // regex to match end
+    smatch match_results;
     regex ender ("^\\S");
     // set the end variable to when the indent is less
     for (int i=start+1; i<line_array.size(); ++i)
@@ -146,24 +204,6 @@ int scan_function(string func_name, int level, int lastpos)
             }
         }
     }
-
-    // scan inside this function for any functions
-    for (int i=start+1; i<end; ++i)
-    {
-        if (regex_search(line_array[i], match_results, func))
-        {
-            follow_code(lastpos, i);
-            lastpos = i;
-            // cout << level+1 << match_results[1] << endl;
-            jump_back.push(i);
-            scan_function(match_results[1], level+1, i);
-        }
-    }
-
-    follow_code(lastpos, end-1);
-    jump_code(end-1, jump_back.top());
-    jump_back.pop();
-    
     return end;
 }
 
@@ -171,7 +211,7 @@ int scan_function(string func_name, int level, int lastpos)
 // |
 // |
 // *
-int follow_code(int start, int end)
+int draw_execution(int start, int end)
 {
     for (int i=0; i<line_array.size(); ++i)
     {
@@ -194,7 +234,7 @@ int follow_code(int start, int end)
 // .v  >.
 //  :  :
 //  >..^
-int jump_code(int start, int end)
+int draw_jump(int start, int end)
 {
     // set direction
     char direction = ' ';
@@ -209,13 +249,7 @@ int jump_code(int start, int end)
     }
     
     // draw start and end lines
-    line_array[start].push_back('.');
-    line_array[start].push_back(direction);
-    line_array[start].push_back(' ');
-
-    line_array[end].push_back(' ');
-    line_array[end].push_back('>');
-    line_array[end].push_back('.');
+    draw_jump_endpoints(start, end, direction);
 
     if (end < start)
     {
@@ -225,6 +259,24 @@ int jump_code(int start, int end)
     }
 
     // draw everything else
+    draw_jump_trace(start, end);
+
+    return 1;
+}
+
+void draw_jump_endpoints(int start, int end, char direction)
+{
+    line_array[start].push_back('.');
+    line_array[start].push_back(direction);
+    line_array[start].push_back(' ');
+
+    line_array[end].push_back(' ');
+    line_array[end].push_back('>');
+    line_array[end].push_back('.');
+}
+
+void draw_jump_trace(int start, int end)
+{
     for (int i=0; i<line_array.size(); ++i)
     {
         if (i != start and i != end)
@@ -243,11 +295,12 @@ int jump_code(int start, int end)
             }
         }
     }
-
-    return 1;
 }
 
-
-
-
-
+void print_flow()
+{
+    for (int i=0; i<line_array.size(); ++i)
+    {
+        cout << left << setw(4) << i+1 << line_array[i] << endl;
+    }
+}

@@ -9,20 +9,19 @@ find a better way to organize my code. If I put things that call each other
 together, it would be faster, but first I need to find out what calls
 what..."
 
-## Features:
+### Features:
 - Different line styles to track normal movement and cross-code function calls
-- Really cool
 
-## What it does:
+### What it does:
 - Traces all normal function calls in a single script from start to finish
 - Outputs handy visual data to cout
 - Allows you to optimize your code for maximum visual/navigation efficiency
 
-## What it doesn't do:
+### What it doesn't do:
 - Account for calls nested inside classes or imported libraries
 - Visually color the output for easier usability
 
-## Reasons for not doing things:
+### Reasons for not doing things:
 - Wow, I'm rusty at C++. 
 
 ### Included files:
@@ -49,6 +48,13 @@ Code jump:
   >.
 ```
 
+### Efficient File Example - smooth, easily traceable code flow:
 
 ![alt text][outputimage]
 [outputimage]: https://github.com/ztaira14/python_flow/blob/master/example.png "Python Flow output on helloworld.py"
+
+
+### Inefficient File Example - choppy, erratic code flow:
+![alt text][outputimage2]
+[outputimage2]: https://github.com/ztaira14/python_flow/blob/master/example.png "Python Flow output on helloworld_ugly.py"
+
