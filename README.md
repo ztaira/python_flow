@@ -45,7 +45,7 @@ Code execution:
 Code jump:
 ```
  .v
-  |
+  :
   >.
 ```
 
