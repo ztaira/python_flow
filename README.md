@@ -9,6 +9,12 @@ find a better way to organize my code. If I put things that call each other
 together, it would be faster, but first I need to find out what calls
 what..."
 
+### Usage:
+- Executable is named 'python\_flow' by default (see makefile)
+- To run, execute it at follows:
+
+`./python_flow python_file_to_scan.py`
+
 ### Features:
 - Different line styles to track normal movement and cross-code function calls
 
