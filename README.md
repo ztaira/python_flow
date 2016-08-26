@@ -11,7 +11,7 @@ what..."
 
 ### Usage:
 - Executable is named 'python\_flow' by default (see makefile)
-- To run, execute it at follows:
+- To run, execute it as follows:
 
 `./python_flow python_file_to_scan.py`
 
